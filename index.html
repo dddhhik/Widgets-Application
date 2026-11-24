@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Daily Card" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>Daily Card — Time, Habit & Reminders</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #131c31;
+      --surface-2: #1b2742;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --done: #22c55e;
+      --border: rgba(148, 163, 184, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top right, #172554 0%, var(--bg) 55%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 20px 14px 36px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .clock {
+      font-size: 2.1rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .date-meta {
+      text-align: right;
+    }
+
+    .day {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .date {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    .habit-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .habit-btn.done {
+      border-color: rgba(34, 197, 94, 0.45);
+      background: rgba(34, 197, 94, 0.14);
+    }
+
+    .habit-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+    }
+
+    .habit-btn.done .badge {
+      background: rgba(34, 197, 94, 0.22);
+      color: #86efac;
+    }
+
+    .reminder-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .reminder-input {
+      flex: 1;
+      min-width: 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.92rem;
+      outline: none;
+    }
+
+    .reminder-input::placeholder {
+      color: var(--muted);
+    }
+
+    .add-btn {
+      background: var(--accent);
+      color: #06101e;
+      border: none;
+      border-radius: 12px;
+      padding: 0 14px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .reminder-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .reminder-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+    }
+
+    .reminder-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .reminder-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reminder-text.completed {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .del-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    .empty-msg {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin: 4px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card top-bar">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date-meta">
+        <div class="day" id="day">---</div>
+        <div class="date" id="date">---</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="section-title">Daily Habit</p>
+      <button class="habit-btn" id="showerBtn" type="button" aria-pressed="false">
+        <span class="habit-left">
+          <span id="showerIcon">○</span>
+          <span>Shower</span>
+        </span>
+        <span class="badge" id="showerStatus">Pending</span>
+      </button>
+    </section>
+
+    <section class="card">
+      <p class="section-title">Reminders</p>
+      <form class="reminder-form" id="reminderForm">
+        <input
+          class="reminder-input"
+          id="reminderInput"
+          type="text"
+          placeholder="Add a reminder..."
+          maxlength="80"
+          required
+        />
+        <button class="add-btn" type="submit">Add</button>
+      </form>
+      <ul class="reminder-list" id="reminderList"></ul>
+      <p class="empty-msg" id="emptyMsg" hidden>No reminders yet.</p>
+    </section>
+  </main>
+
+  <script>
+    function getTodayKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    const STORAGE_KEY = "daily_card_state_v1";
+
+    function loadState() {
+      const todayKey = getTodayKey();
+      const fallback = {
+        habitDate: todayKey,
+        showerDone: false,
+        reminders: [
+          { id: 1, text: "Check morning schedule", done: false },
+          { id: 2, text: "Drink water", done: false }
+        ]
+      };
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+
+        // Automatically reset daily "Shower" habit on a new day
+        const showerDone =
+          parsed.habitDate === todayKey ? Boolean(parsed.showerDone) : false;
+
+        return {
+          habitDate: todayKey,
+          showerDone,
+          reminders: Array.isArray(parsed.reminders) ? parsed.reminders : fallback.reminders
+        };
+      } catch {
+        return fallback;
+      }
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      state.habitDate = getTodayKey();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").textContent = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      document.getElementById("day").textContent = now.toLocaleDateString([], {
+        weekday: "long"
+      });
+      document.getElementById("date").textContent = now.toLocaleDateString([], {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function renderHabit() {
+      const btn = document.getElementById("showerBtn");
+      const icon = document.getElementById("showerIcon");
+      const status = document.getElementById("showerStatus");
+
+      btn.classList.toggle("done", state.showerDone);
+      btn.setAttribute("aria-pressed", String(state.showerDone));
+      icon.textContent = state.showerDone ? "✓" : "○";
+      status.textContent = state.showerDone ? "Done" : "Pending";
+    }
+
+    function renderReminders() {
+      const list = document.getElementById("reminderList");
+      const emptyMsg = document.getElementById("emptyMsg");
+      list.innerHTML = "";
+
+      emptyMsg.hidden = state.reminders.length > 0;
+
+      state.reminders.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "reminder-item";
+
+        const main = document.createElement("div");
+        main.className = "reminder-main";
+        main.addEventListener("click", () => {
+          item.done = !item.done;
+          saveState();
+          renderReminders();
+        });
+
+        const check = document.createElement("span");
+        check.textContent = item.done ? "☑" : "☐";
+
+        const span = document.createElement("span");
+        span.className = "reminder-text" + (item.done ? " completed" : "");
+        span.textContent = item.text;
+
+        main.appendChild(check);
+        main.appendChild(span);
+
+        const del = document.createElement("button");
+        del.className = "del-btn";
+        del.type = "button";
+        del.setAttribute("aria-label", "Delete reminder");
+        del.textContent = "×";
+        del.addEventListener("click", () => {
+          state.reminders = state.reminders.filter((r) => r.id !== item.id);
+          saveState();
+          renderReminders();
+        });
+
+        li.appendChild(main);
+        li.appendChild(del);
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById("showerBtn").addEventListener("click", () => {
+      state.showerDone = !state.showerDone;
+      saveState();
+      renderHabit();
+    });
+
+    document.getElementById("reminderForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = document.getElementById("reminderInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      state.reminders.unshift({
+        id: Date.now(),
+        text,
+        done: false
+      });
+      input.value = "";
+      saveState();
+      renderReminders();
+    });
+
+    // Keep date/habit current even if tab stays open across midnight
+    setInterval(() => {
+      updateClock();
+      if (state.habitDate !== getTodayKey()) {
+        state = loadState();
+        renderHabit();
+      }
+    }, 1000);
+
+    updateClock();
+    renderHabit();
+    renderReminders();
+  </script>
+</body>
+</html>
